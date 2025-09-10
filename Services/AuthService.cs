@@ -30,7 +30,7 @@ namespace security_service.Services
             return user;
         }
 
-        public async Task<(string, string)> Login(CredentialsDTO credentials)
+        public async Task<UserPayload /*(string, string)*/> Login(CredentialsDTO credentials)
         {     
             User user = await GetUser(credentials);
            
@@ -40,10 +40,10 @@ namespace security_service.Services
                 RefreshToken refreshToken = _tokenService.GenerateRefreshToken(user.Id, user.Login, user.Role.ToString());
 
                 _refreshTokenService.Add(refreshToken);
-                return (accessToken, refreshToken.TokenValue!);
+                return new UserPayload() { Id = user.Id, Email = user.Email, AccessToken = accessToken }; /*(accessToken, refreshToken.TokenValue!);*/
             }
 
-            return ("-1", "-1");
+            return new UserPayload(); /*("-1", "-1");*/
         }
         
         public (string, string) RefreshToken(string token)

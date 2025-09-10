@@ -36,6 +36,25 @@ builder.Services.AddAuthentication("Bearer").AddJwtBearer(
     )};
 });
 
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    // Тайм-аут неактивности сессии 
+    options.IdleTimeout = TimeSpan.FromMinutes(20);
+    // Куки доступны только через HTTP 
+    options.Cookie.HttpOnly = true;
+    // Куки важны для работы приложения 
+    options.Cookie.IsEssential = true;
+});
+
+builder.Services.Configure<CookiePolicyOptions>(options =>
+{
+    // Запрашивать согласие пользователя на использование куки 
+    options.CheckConsentNeeded = context => true;
+    // Политика SameSite для защиты куки 
+    options.MinimumSameSitePolicy = SameSiteMode.Strict;
+});
+
 builder.Services.AddAuthorization();
 
 builder.Services.AddControllers()
@@ -55,6 +74,9 @@ builder.Services.AddScoped<AuthService>();
 
 
 WebApplication app = builder.Build();
+
+app.UseSession();
+app.UseCookiePolicy();
 
 app.MapControllers();
 
