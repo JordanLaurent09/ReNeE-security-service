@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.Json;
@@ -9,6 +11,7 @@ using security_service.Database.Repositories.Interfaces;
 using security_service.Resources.RefreshSessions;
 using security_service.Resources.RefreshSessions.Interfaces;
 using security_service.Services;
+using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -32,9 +35,11 @@ builder.Services.AddAuthentication("Bearer").AddJwtBearer(
             ValidIssuer = "example-app",
             ValidAudience = "example-app-users",
             IssuerSigningKey = new
-    SymmetricSecurityKey(Encoding.UTF8.GetBytes("super_secret_key_123456789111 2131415")
+    SymmetricSecurityKey(Encoding.UTF8.GetBytes("super_secret_key_1234567891112131415")
     )};
 });
+
+builder.Services.AddAuthorization();
 
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
@@ -55,7 +60,7 @@ builder.Services.Configure<CookiePolicyOptions>(options =>
     options.MinimumSameSitePolicy = SameSiteMode.Strict;
 });
 
-builder.Services.AddAuthorization();
+
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -78,11 +83,14 @@ WebApplication app = builder.Build();
 app.UseSession();
 app.UseCookiePolicy();
 
-app.MapControllers();
+app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapGet("/", () => "Hello World!");
+app.MapControllers();
+
+
+app.MapGet("/", () => "Hello world");
 
 app.Run();
