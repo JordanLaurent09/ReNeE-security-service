@@ -12,6 +12,7 @@ namespace security_service.Resources.RefreshSessions
 {
     [ApiController]
     [Route("auth")]
+    [Produces("application/json")]
     public class RefreshTokensController : ControllerBase
     {
         IRefreshTokenService _refreshTokenService;
@@ -37,11 +38,33 @@ namespace security_service.Resources.RefreshSessions
             _authService = authService;
         }
 
+
+        /// <summary>
+        /// Authorize user
+        /// </summary>
+        /// <param name="credentialsDTO"></param>
+        /// <returns></returns>
+        /// <remarks>
+        /// 
+        /// {
+        ///     credential: "testMail@mail.ru",
+        ///     password: "password"    
+        /// }
+        /// 
+        /// </remarks>
+        /// <response code="200">Authorize specific user </response>
+        /// <response code="400">If param is absent</response>
+        /// <response code="404">If specific user not found</response>
+        /// <response code="500">If server error occurs</response>
+
         [HttpPost]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [Route("login")]
         public async Task<IActionResult> Login([FromBody] CredentialsDTO credentialsDTO)
-        {
-            /*(string accessToken, string refreshToken)*/
+        {            
             UserPayload data = await _authService.Login(credentialsDTO);
 
 
@@ -51,19 +74,27 @@ namespace security_service.Resources.RefreshSessions
             if (session != null)
             {
                 session.SetString("accessToken", data.AccessToken!);
-                //session.SetString("refreshToken", data.refreshToken);
             }
 
             HttpContext.Response.Cookies.Append("accessToken", data.AccessToken!);
 
-            Console.WriteLine(session!.GetString("accessToken"));
-            //Console.WriteLine(session!.GetString("refreshToken"));
+            Console.WriteLine(session!.GetString("accessToken"));          
 
-            return Ok(/*new { data.accessToken, data.refreshToken }*/ data);
+            return Ok(data);
 
         }
 
+        /// <summary>
+        /// Gets all existing users
+        /// </summary>
+        /// <returns></returns>
+        /// <response code="200">Returns all users</response>
+        /// <response code="401">If attempt of unauthorized access occurs</response>
+        /// <response code="500">If server error occurs</response>
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]      
         [Route("allUsers")]
         [Authorize]
         public async Task<IActionResult> GetAllUsers()
@@ -74,7 +105,31 @@ namespace security_service.Resources.RefreshSessions
             return Ok(users);
         }
 
+
+        /// <summary>
+        /// Creates new user
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        /// <remarks>
+        /// 
+        ///  {
+        ///     "login": "fred21",
+        ///     "firstname": "Fred",
+        ///     "lastname": "Johnson",
+        ///     "email": "freddie22@mail.com",
+        ///     "sex": "MALE",
+        ///     "password": "iamfreddie"
+        ///  }
+        /// 
+        /// </remarks>
+        /// <response code="201">Returns newly created user</response>
+        /// <response code="400">If entity is null</response>
+        /// <response code="500">If server error occurs</response>
         [HttpPost]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [Route("register")]
         public async Task<IActionResult> CreateUser([FromBody] User user)
         {
@@ -83,7 +138,23 @@ namespace security_service.Resources.RefreshSessions
             return Ok(result);
         }
 
+
+        /// <summary>
+        /// Gets specific user by it's id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        /// <response code="200">Returns specific user by id</response>
+        /// <response code="400">If param is absent</response>
+        /// <response code="401">If attempt of unauthorized access occurs</response>
+        /// <response code="404">If specific user not found</response>
+        /// <response code="500">If server error occurs</response>
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [Route("users/{id:int}")]
         [Authorize]
         public async Task<IActionResult> GetUserById(int id)
@@ -93,7 +164,36 @@ namespace security_service.Resources.RefreshSessions
             return Ok(user);
         }
 
+
+        /// <summary>
+        /// Changes specific user
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        /// <remarks>
+        /// 
+        /// {
+        ///     "id": 10,
+        ///     "login": "fred21",
+        ///     "firstname": "Fred",
+        ///     "lastname": "Johnson",
+        ///     "email": "freddie22@mail.com",
+        ///     "sex": "MALE",
+        ///     "password": "iamfreddie"
+        ///  }
+        /// 
+        /// </remarks>
+        /// <response code="200">Returns updated user</response>
+        /// <response code="400">If entity is null</response>
+        /// <response code="401">If attempt of unauthorized access occurs</response>
+        /// <response code="404">If user not found</response>
+        /// <response code="500">If server error occurs</response>
         [HttpPatch]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [Route("users/update")]
         [Authorize]
         public async Task<IActionResult> UpdateUser([FromBody] User user)
@@ -109,7 +209,24 @@ namespace security_service.Resources.RefreshSessions
             }
         }
 
+
+
+        /// <summary>
+        /// Deletes specific user
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        /// <response code="200">Deletes specific user by id</response>
+        /// <response code="400">If param is absence</response>
+        /// <response code="401">If attempt of unauthorized access occurs</response>
+        /// <response code="404">If user not found</response>
+        /// <response code="500">If server error occurs</response>
         [HttpDelete]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [Route("users/{id:int}")]
         [Authorize]
         public async Task<IActionResult> DeleteUser(int id)
@@ -125,7 +242,33 @@ namespace security_service.Resources.RefreshSessions
             }
         }
 
+
+
+
+
+        ///<summary>
+        /// Add performer to user's favorites
+        ///</summary>
+        ///<param name="data"></param>
+        ///<returns></returns>
+        ///<remarks>
+        /// 
+        /// {
+        ///     "userId": 1,
+        ///     "performerId": 1
+        /// }
+        /// 
+        ///</remarks>
+        ///<response code="200">Returns success message</response>
+        ///<response code="400">If uncorrect request occurs</response>
+        ///<response code="401">If attempt of unauthorized access occurs</response>
+        ///<response code="500">If server error occurs</response>
         [HttpPost]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [Route("addPerformer")]
         [Authorize]
         public async Task<IActionResult> AddPerformer([FromBody] UsersPerformers data)
@@ -135,7 +278,25 @@ namespace security_service.Resources.RefreshSessions
             return Ok(result);
         }
 
+
+
+
+        /// <summary>
+        /// Get indexes of user's favorite performers
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        /// <response code="200">Returns indexes array</response>
+        /// <response code="400">If bad response occurs</response>
+        /// <response code="401">If attempt of unauthorized access occurs</response>
+        /// <response code="404">If values didn't find</response>
+        /// <response code="500">If server error occurs</response>
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [Route("performers/{userId:int}")]
         [Authorize]
         public async Task<IActionResult> GetPerformersIds(int userId)
@@ -145,7 +306,25 @@ namespace security_service.Resources.RefreshSessions
             return Ok(ids);
         }
 
+
+        /// <summary>
+        /// Removes favorite user's performer
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="performerId"></param>
+        /// <returns></returns>
+        /// <response code="200">Returns success message</response>
+        /// <response code="400">If bad response occurs</response>
+        /// <response code="401">If attempt of unauthorized access occurs</response>
+        /// <response code="404">If favorite performer didn't find</response>
+        /// <response code="500">If server error occurs</response>
+        /// 
         [HttpDelete]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]        
         [Route("deletePerformer")]
         [Authorize]
         public async Task<IActionResult> DeleteFavoritePerformer([FromQuery]int userId, [FromQuery]int performerId)
@@ -161,7 +340,23 @@ namespace security_service.Resources.RefreshSessions
             }
         }
 
+        /// <summary>
+        /// Return's array with user's photos
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="performerId"></param>
+        /// <returns></returns>
+        /// <response code="200">Returns photo array</response>
+        /// <response code="400">If bad response occurs</response>
+        /// <response code="401">If attempt of unauthorized access occurs</response>
+        /// <response code="404">If photos didn't find</response>
+        /// <response code="500">If server error occurs</response>
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [Route("photos")]
         [Authorize]
         public async Task<IActionResult> GetPerformerPhotos([FromQuery] int userId, [FromQuery] int performerId)
@@ -171,7 +366,32 @@ namespace security_service.Resources.RefreshSessions
             return Ok(photos);
         }
 
+
+
+        /// <summary>
+        /// Add new user's photo of favorite performer
+        /// </summary>
+        /// <param name="photo"></param>
+        /// <returns></returns>
+        ///<remarks>
+        ///
+        /// {
+        ///     performerId: 1,
+        ///     userId: 1,
+        ///     image: "text view of picture file"
+        /// }
+        /// 
+        ///</remarks> 
+        ///
+        /// <response code="200"> Returns success message</response>
+        /// <response code="400">If bad response occurs</response>
+        /// <response code="401">If attempt of unauthorized access occurs</response>
+        /// <response code="500">If server error occurs</response>
         [HttpPost]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [Route("addPhoto")]
         [Authorize]
         public async Task<IActionResult> AddNewPhoto([FromBody] Photo photo)
@@ -181,7 +401,24 @@ namespace security_service.Resources.RefreshSessions
             return Ok(result);
         }
 
+
+
+        /// <summary>
+        /// Removes chosen photo
+        /// </summary>
+        /// <param name="photoId"></param>
+        /// <returns></returns>
+        /// <response code="200"> Returns success message</response>
+        /// <response code="400">If bad response occurs</response>
+        /// <response code="401">If attempt of unauthorized access occurs</response>
+        /// <response code="404">If chosen photo didn't find</response>
+        /// <response code="500">If server error occurs</response>
         [HttpDelete]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [Route("deletePhoto/{photoId:int}")]
         [Authorize]
         public async Task<IActionResult> RemovePerformerPhoto(int photoId)
@@ -198,7 +435,24 @@ namespace security_service.Resources.RefreshSessions
             }
         }
 
+
+        /// <summary>
+        /// Get user's favorite albums indexes
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="performerId"></param>
+        /// <returns></returns>
+        /// <response code="200"> Returns array of albums indexes</response>
+        /// <response code="400">If bad response occurs</response>
+        /// <response code="401">If attempt of unauthorized access occurs</response>
+        /// <response code="404">If chosen photo didn't find</response>
+        /// <response code="500">If server error occurs</response>
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [Route("albums")]
         [Authorize]
         public async Task<IActionResult> GetAlbumsIds([FromQuery] int userId, [FromQuery] int performerId)
@@ -208,7 +462,31 @@ namespace security_service.Resources.RefreshSessions
             return Ok(ids);
         }
 
+
+        /// <summary>
+        /// Add album to user's favorites
+        /// </summary>
+        /// <param name="album"></param>
+        /// <returns></returns>
+        /// <remarks>
+        /// 
+        /// {
+        ///     albumId: 1,
+        ///     userId: 1,
+        ///     performerId: 1
+        ///     
+        /// }
+        ///
+        /// </remarks>
+        /// <response code="200">Returns success message</response>
+        /// <response code="400">If uncorrect request occurs</response> 
+        /// <response code="401">If attempt of unauthorized access occurs</response>
+        /// <response code="500">If server error occurs</response>
         [HttpPost]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [Route("addAlbum")]
         [Authorize]
         public async Task<IActionResult> AddAlbum([FromBody] UsersAlbums album)
@@ -218,7 +496,25 @@ namespace security_service.Resources.RefreshSessions
             return Ok(result);
         }
 
+
+
+        /// <summary>
+        /// Removes user's favorite album
+        /// </summary>
+        /// <param name="albumId"></param>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        /// <response code="200"> Returns success message</response>
+        /// <response code="400">If bad response occurs</response>
+        /// <response code="401">If attempt of unauthorized access occurs</response>
+        /// <response code="404">If chosen album didn't find</response>
+        /// <response code="500">If server error occurs</response>
         [HttpDelete]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [Route("deleteAlbum")]
         [Authorize]
         public async Task<IActionResult> RemoveAlbum([FromQuery]int albumId, [FromQuery] int userId)

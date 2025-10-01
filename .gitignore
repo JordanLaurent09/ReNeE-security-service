@@ -5,3 +5,6 @@ appsettings*
 *.sln
 .vs
 Dockerfile
+
+.gitignore
+.env

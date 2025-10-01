@@ -11,6 +11,7 @@ using security_service.Database.Repositories.Interfaces;
 using security_service.Resources.RefreshSessions;
 using security_service.Resources.RefreshSessions.Interfaces;
 using security_service.Services;
+using System.Reflection;
 using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Text.Json;
@@ -60,8 +61,6 @@ builder.Services.Configure<CookiePolicyOptions>(options =>
     options.MinimumSameSitePolicy = SameSiteMode.Strict;
 });
 
-
-
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -70,6 +69,12 @@ builder.Services.AddControllers()
     });
 builder.Services.AddHttpClient();
 builder.Services.AddMvc();
+
+builder.Services.AddSwaggerGen(options =>
+{
+    string xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+});
 
 builder.Services.AddScoped<IRepository<RefreshToken>, RefreshTokenRepository>();
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
@@ -90,6 +95,8 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.MapGet("/", () => "Hello world");
 
